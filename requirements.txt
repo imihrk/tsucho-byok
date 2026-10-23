@@ -1,0 +1,5 @@
+pandas
+streamlit
+Pillow
+python-dotenv
+google-genai>=2.3.0
