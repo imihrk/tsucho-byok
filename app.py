@@ -3,7 +3,7 @@ import hashlib
 import io
 import json
 import time
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import streamlit as st
@@ -11,6 +11,7 @@ from streamlit.errors import StreamlitSecretNotFoundError
 from google import genai
 from google.genai import types
 from PIL import Image
+from streamlit_cookies_controller import CookieController
 
 GEMINI_MODEL = "gemini-3.8-flash"
 
@@ -84,9 +85,35 @@ if not st.session_state.get("password_authenticated"):
 
 st.title("🏦 通帳取引データ変換")
 st.caption("複数の通帳画像をまとめて読み取り、弥生会計用CSVを作成します。")
-gemini_api_key = st.text_input(
-    "あなたのGemini APIキーを入力してください", type="password"
-)
+
+cookie_controller = CookieController()
+api_key_cookie_name = "gemini_api_key"
+stored_api_key = cookie_controller.get(api_key_cookie_name)
+gemini_api_key = stored_api_key if isinstance(stored_api_key, str) else ""
+
+if gemini_api_key.strip():
+    st.sidebar.success("✅ APIキー設定済み")
+    if st.sidebar.button("APIキーをリセット（Cookieから削除）する"):
+        cookie_controller.remove(api_key_cookie_name)
+        st.rerun()
+else:
+    with st.sidebar.form("gemini_api_key_form"):
+        entered_api_key = st.text_input(
+            "あなたのGemini APIキーを入力してください", type="password"
+        )
+        api_key_submitted = st.form_submit_button(
+            "APIキーを保存", type="primary", use_container_width=True
+        )
+    if api_key_submitted:
+        if entered_api_key.strip():
+            cookie_controller.set(
+                api_key_cookie_name,
+                entered_api_key.strip(),
+                expires=datetime.now() + timedelta(days=365),
+            )
+            st.rerun()
+        else:
+            st.sidebar.error("Gemini APIキーを入力してください。")
 
 with st.container(border=True):
     st.write(

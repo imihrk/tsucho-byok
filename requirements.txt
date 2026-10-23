@@ -3,3 +3,4 @@ streamlit
 Pillow
 python-dotenv
 google-genai>=2.3.0
+streamlit-cookies-controller>=0.0.4
